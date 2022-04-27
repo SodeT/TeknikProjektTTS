@@ -70,7 +70,6 @@ while(True):
             break
 
         approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-
         image = cv2.drawContours(image, [approx], -1, (0, 255, 0), 2) 
 
         n = approx.ravel() 
@@ -122,7 +121,6 @@ while(True):
     else: # no contours
         peopleInFrame = 0
 
-        
 
     cv2.imshow('frame', image)
     time.sleep(powerUsageThrotle)
