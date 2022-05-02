@@ -1,9 +1,15 @@
-import numpy as np
-import cv2
+import numpy as np, cv2
+import wave, pyaudio, audioop
 import time
 
+import pyaudio
+import wave
+import audioop
+ 
+# program params
 powerUsageThrotle = 0 # sleep in s to reduce power usage 
 
+# visual params
 peopleInFrame = 0
 avgX1 = 0
 avgY1 = 0
@@ -26,6 +32,23 @@ fgbg.setBackgroundRatio(0.8)
 fgbg.setComplexityReductionThreshold(0.8)
 fgbg.setHistory(30)
 
+# audio params
+CHUNK = 1024
+FORMAT = pyaudio.paInt16
+CHANNELS = 2
+RATE = 44100
+
+
+pyAud = pyaudio.PyAudio()
+
+""""
+device_count = pyAud.get_device_count()
+for i in range(0, device_count):
+        print("Name: " + str(pyAud.get_device_info_by_index(i)["name"]))
+        print("Index: " + str(pyAud.get_device_info_by_index(i)["index"]))
+        print("\n")
+"""
+stream = pyAud.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
 
 while(True):
 	
@@ -65,7 +88,6 @@ while(True):
 
         avg_color_per_row = np.average(fgmask, axis=0)
         avg_color = np.average(avg_color_per_row, axis=0)
-        print(avg_color)
         if avg_color > acceptedFGThreshold:
             break
 
@@ -123,7 +145,17 @@ while(True):
 
 
     cv2.imshow('frame', image)
-    time.sleep(powerUsageThrotle)
-  
+
+    data = stream.read(CHUNK)
+    rms = audioop.rms(data, 2)    # here's where you calculate the volume
+    print(rms)
+
+
+    #time.sleep(powerUsageThrotle) 
+
 cap.release()
 cv2.destroyAllWindows()
+
+stream.stop_stream()
+stream.close()
+pyAud.terminate()
