@@ -5,9 +5,29 @@ import time
 import pyaudio
 import wave
 import audioop
- 
+
+def talk(numberOfPeople, volume):
+    if numberOfPeople == 1:
+        print("Talk to one person!", volume)
+    elif numberOfPeople == 2:
+        print("Talk to multiple people!", volume)
+    else:
+        print("This elevator is empty!", volume)
+
 # program params
 powerUsageThrotle = 0 # sleep in s to reduce power usage 
+
+people2Remember = 10
+rememebrdPeople = [0] * people2Remember
+
+audio2Remember = 10
+rememberdAudio = [0] * audio2Remember
+
+audioThreshold = 2000
+
+talkDelay = 4
+lastTalkTime = 0
+frameTimer = 0
 
 # visual params
 peopleInFrame = 0
@@ -51,7 +71,8 @@ for i in range(0, device_count):
 stream = pyAud.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
 
 while(True):
-	
+    startTime = time.time()
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     
@@ -86,9 +107,9 @@ while(True):
         if cv2.arcLength(cnt, True) < 200:# and cv2.arcLength(cnt, True) > 20:
             continue
 
-        avg_color_per_row = np.average(fgmask, axis=0)
-        avg_color = np.average(avg_color_per_row, axis=0)
-        if avg_color > acceptedFGThreshold:
+        avgRowColor = np.average(fgmask, axis=0)
+        avgColor = np.average(avgRowColor, axis=0)
+        if avgColor > acceptedFGThreshold:
             break
 
         approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
@@ -148,10 +169,21 @@ while(True):
 
     data = stream.read(CHUNK)
     rms = audioop.rms(data, 2)    # here's where you calculate the volume
-    print(rms)
 
+    # parsing human data
+    rememberdAudio.insert(0,rememberdAudio.pop(-1))
+    rememberdAudio[0] = rms
 
-    #time.sleep(powerUsageThrotle) 
+    rememebrdPeople.insert(0,rememebrdPeople.pop(-1))
+    rememebrdPeople[0] = peopleInFrame
+
+    if talkDelay < lastTalkTime:
+        lastTalkTime = 0
+        talk(round(np.average(rememebrdPeople)), np.average(rememberdAudio))
+
+    time.sleep(powerUsageThrotle) 
+    frameTimer = time.time() - startTime
+    lastTalkTime += frameTimer
 
 cap.release()
 cv2.destroyAllWindows()
