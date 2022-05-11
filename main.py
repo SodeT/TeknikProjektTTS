@@ -9,10 +9,15 @@ import audioop
 def talk(numberOfPeople, volume):
     if numberOfPeople == 1:
         print("Talk to one person!", volume)
+        return True
+
     elif numberOfPeople == 2:
         print("Talk to multiple people!", volume)
+        return True
+
     else:
         print("This elevator is empty!", volume)
+        return False
 
 # program params
 powerUsageThrotle = 0 # sleep in s to reduce power usage 
@@ -28,6 +33,8 @@ audioThreshold = 2000
 talkDelay = 4
 lastTalkTime = 0
 frameTimer = 0
+
+state = "tyst"
 
 # visual params
 peopleInFrame = 0
@@ -178,8 +185,9 @@ while(True):
     rememebrdPeople[0] = peopleInFrame
 
     if talkDelay < lastTalkTime:
-        lastTalkTime = 0
-        talk(round(np.average(rememebrdPeople)), np.average(rememberdAudio))
+        ret = talk(round(np.average(rememebrdPeople)), np.average(rememberdAudio))
+        if ret:
+            lastTalkTime = 0
 
     time.sleep(powerUsageThrotle) 
     frameTimer = time.time() - startTime
