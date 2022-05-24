@@ -150,7 +150,7 @@ while(True):
                 maxX = max(maxX, n[i])
             i += 1
 
-    # Getting avarages
+    # Getting averages
     if numberOfXY1 > 0:
         avgX1 = totalX1 / numberOfXY1
         avgY1 = totalY1 / numberOfXY1
@@ -159,7 +159,7 @@ while(True):
         avgX2 = totalX2 / numberOfXY2
         avgY2 = totalY2 / numberOfXY2
 
-    if avgX1 - avgX2 > width * avgDistThreshold and maxX - minX > width * minMaxDistThreshold: # if the avarage contours are separated enough
+    if avgX1 - avgX2 > width * avgDistThreshold and maxX - minX > width * minMaxDistThreshold: # if the average contours are separated enough
         image = cv2.circle(image, (int(avgX1), int(avgY1)), 20, (255,0,0), 3)
         image = cv2.circle(image, (int(avgX2), int(avgY2)), 20, (255,0,0), 3)
         peopleInFrame = 2
