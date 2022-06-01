@@ -1,6 +1,8 @@
 import numpy as np, cv2
 import wave, pyaudio, audioop
 import time
+import random
+import os
 
 import pyaudio
 import wave
@@ -9,15 +11,25 @@ import audioop
 def talk(numberOfPeople, volume):
     if numberOfPeople == 1:
         print("Talk to one person!", volume)
-        return True
+        voiceLine = wave.open(os.getcwd() + "\\sounds\\" + random.choice(onePersonLines) + ".wav", "rb")
 
     elif numberOfPeople == 2:
         print("Talk to multiple people!", volume)
-        return True
+        voiceLine = wave.open(os.getcwd() + "\\sounds\\" + random.choice(twoPersonLines) + ".wav", "rb")
 
     else:
         print("This elevator is empty!", volume)
         return False
+
+    streamOut = pyAud.open(format = pyAud.get_format_from_width(voiceLine.getsampwidth()), channels = voiceLine.getnchannels(),rate = voiceLine.getframerate(), output = True)
+
+    data = voiceLine.readframes(CHUNK)
+    while data:
+        streamOut.write(data)
+        data = voiceLine.readframes(CHUNK)
+
+    return True
+
 
 # program params
 powerUsageThrotle = 0 # sleep in s to reduce power usage 
@@ -30,11 +42,12 @@ rememberdAudio = [0] * audio2Remember
 
 audioThreshold = 2000
 
-talkDelay = 4
+talkDelay = 20
 lastTalkTime = 0
 frameTimer = 0
 
 state = "tyst"
+talkRet = False
 
 # visual params
 peopleInFrame = 0
@@ -59,6 +72,10 @@ fgbg.setBackgroundRatio(0.8)
 fgbg.setComplexityReductionThreshold(0.8)
 fgbg.setHistory(30)
 
+# voice lines
+onePersonLines = ["elevatorPitch", "wat", "vartÄrDuPåväg", "starwars", "wat2", "åkerDuEnsamIHissen"]
+twoPersonLines = ["cannibal", "frukost", "helgen", "rickRoll", "vädret"]
+
 # audio params
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -68,14 +85,14 @@ RATE = 44100
 
 pyAud = pyaudio.PyAudio()
 
-""""
+"""
 device_count = pyAud.get_device_count()
 for i in range(0, device_count):
         print("Name: " + str(pyAud.get_device_info_by_index(i)["name"]))
         print("Index: " + str(pyAud.get_device_info_by_index(i)["index"]))
         print("\n")
 """
-stream = pyAud.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+#stream = pyAud.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
 
 while(True):
     startTime = time.time()
@@ -174,28 +191,32 @@ while(True):
 
     cv2.imshow('frame', image)
 
-    data = stream.read(CHUNK)
-    rms = audioop.rms(data, 2)    # here's where you calculate the volume
+    data = 0 #stream.read(CHUNK)
+    #rms = audioop.rms(data, 2)    # here's where you calculate the volume
 
     # parsing human data
-    rememberdAudio.insert(0,rememberdAudio.pop(-1))
-    rememberdAudio[0] = rms
+    #rememberdAudio.insert(0,rememberdAudio.pop(-1))
+    #rememberdAudio[0] = rms
 
     rememebrdPeople.insert(0,rememebrdPeople.pop(-1))
     rememebrdPeople[0] = peopleInFrame
 
     if talkDelay < lastTalkTime:
-        ret = talk(round(np.average(rememebrdPeople)), np.average(rememberdAudio))
-        if ret:
+        talkRet = talk(round(np.average(rememebrdPeople)), 0)#np.average(rememberdAudio))
+        if talkRet:
             lastTalkTime = 0
-
+        else:
+            lastTalkTime /= 2
+    print("ret" + str(talkRet))
     time.sleep(powerUsageThrotle) 
     frameTimer = time.time() - startTime
     lastTalkTime += frameTimer
 
+    print(lastTalkTime)
+
 cap.release()
 cv2.destroyAllWindows()
 
-stream.stop_stream()
-stream.close()
+#stream.stop_stream()
+#stream.close()
 pyAud.terminate()
